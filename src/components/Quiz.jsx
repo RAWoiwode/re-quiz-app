@@ -5,12 +5,30 @@ import Timer from "./Timer";
 
 const Quiz = () => {
   const [userAnswers, setUserAnswers] = useState([]);
-  const activeIndex = userAnswers.length;
+  const [answerState, setAnswerState] = useState("");
+  const activeIndex =
+    answerState === "" ? userAnswers.length : userAnswers.length - 1;
   const isQuizComplete = activeIndex === QUESTIONS.length;
 
-  const handleSelectAnswer = useCallback((selectedAnswer) => {
-    setUserAnswers((prevAnswers) => [...prevAnswers, selectedAnswer]);
-  }, []);
+  const handleSelectAnswer = useCallback(
+    (selectedAnswer) => {
+      setUserAnswers((prevAnswers) => [...prevAnswers, selectedAnswer]);
+      setAnswerState("answered");
+
+      const timer = setTimeout(() => {
+        if (selectedAnswer === QUESTIONS[activeIndex].answers[0]) {
+          setAnswerState("correct");
+        } else {
+          setAnswerState("wrong");
+        }
+
+        setTimeout(() => {
+          setAnswerState("");
+        }, 2000);
+      }, 1000);
+    },
+    [activeIndex]
+  );
 
   const handleSkipAnswer = useCallback(
     () => handleSelectAnswer(null),
@@ -35,13 +53,30 @@ const Quiz = () => {
         <Timer key={activeIndex} time={10000} onTimeout={handleSkipAnswer} />
         <h2>{QUESTIONS[activeIndex].text}</h2>
         <ul id="answers">
-          {shuffledAnswers.map((answer) => (
-            <li key={answer} className="answer">
-              <button onClick={() => handleSelectAnswer(answer)}>
-                {answer}
-              </button>
-            </li>
-          ))}
+          {shuffledAnswers.map((answer) => {
+            const isSelected = userAnswers[userAnswers.length - 1] === answer;
+            let classes = "";
+
+            if (answerState === "answered" && isSelected) {
+              classes = "selected";
+            } else if (
+              (answerState === "correct" || answerState === "wrong") &&
+              isSelected
+            ) {
+              classes = answerState;
+            }
+
+            return (
+              <li key={answer} className="answer">
+                <button
+                  className={classes}
+                  onClick={() => handleSelectAnswer(answer)}
+                >
+                  {answer}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
